@@ -94,208 +94,333 @@
 </script>
 <style>
   :root {
-    --bg: #f6f7f9; --card: #ffffff; --text: #1b1f24; --muted: #5d6673; --border: #d8dde3;
-    --accent: #1f5fbf; --accent-text: #ffffff; --ok-bg: #e9f6ee; --ok-border: #9fd4b1; --ok-text: #17542e;
-    --warn: #b3261e; --input-bg: #ffffff; --locked-bg: #eef1f4;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #12151a; --card: #1b2028; --text: #e6e9ee; --muted: #9aa4b1; --border: #2e3540;
-      --accent: #6ea2ff; --accent-text: #0b1220; --ok-bg: #12291b; --ok-border: #2c6b42; --ok-text: #a8e2bb;
-      --warn: #ff8a80; --input-bg: #141920; --locked-bg: #222832;
-    }
+    --bg: #ffffff; --side: #f7f9fc; --text: #1a1f36; --muted: #697386; --faint: #a3acb9;
+    --border: #e3e8ee; --input-border: #dfe3e8;
+    --accent: #5469d4; --accent-hover: #4b5fc9; --accent-soft: rgba(84, 105, 212, .12); --focus: rgba(84, 105, 212, .35);
+    --ok: #1ea672; --ok-soft: #e6f6ef; --warn: #df1b41; --locked: #f6f8fa;
+    --shadow-input: 0 1px 1px rgba(0, 0, 0, .03), 0 3px 6px rgba(18, 42, 66, .02);
+    --shadow-card: 0 7px 14px rgba(50, 50, 93, .1), 0 3px 6px rgba(0, 0, 0, .07);
   }
   * { box-sizing: border-box; }
-  html[data-redirecting] body > main { display: none; }
+  html[data-redirecting] body > .layout { display: none; }
   html:not([data-redirecting]) #redirecting { display: none; }
   body {
     margin: 0; background: var(--bg); color: var(--text);
-    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Ubuntu, sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
-  main, #redirecting { max-width: 720px; margin: 0 auto; padding: 24px 16px 64px; }
-  h1 { font-size: 1.5rem; margin: 0 0 4px; }
-  h2 { font-size: 1.05rem; margin: 0 0 12px; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
   p { margin: 0 0 12px; }
-  .muted { color: var(--muted); font-size: .9rem; }
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px; margin-top: 16px; }
-  .privacy { background: var(--ok-bg); border-color: var(--ok-border); color: var(--ok-text); }
-  .privacy ul { margin: 6px 0 0; padding-left: 20px; }
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
-  .full { grid-column: 1 / -1; }
-  @media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
-  label { display: block; font-weight: 600; font-size: .9rem; margin-bottom: 4px; }
-  label .hint { font-weight: 400; color: var(--muted); }
+
+  /* Split layout: summary on the left, form on the right */
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 100vh; }
+  .side { background: var(--side); border-right: 1px solid var(--border); display: flex; justify-content: flex-end; }
+  .side-inner { width: 100%; max-width: 440px; padding: 64px 48px 40px; display: flex; flex-direction: column; position: sticky; top: 0; max-height: 100vh; overflow: auto; }
+  .main { display: flex; justify-content: flex-start; }
+  .main-inner { width: 100%; max-width: 480px; padding: 64px 48px 64px; }
+
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--muted); font-size: 14px; }
+  .brand-mark { width: 28px; height: 28px; border-radius: 7px; background: linear-gradient(135deg, #7a73ff, #5469d4); color: #fff; display: grid; place-items: center; font-size: 15px; }
+  h1 { font-size: 28px; line-height: 1.2; font-weight: 600; letter-spacing: -.01em; margin: 28px 0 10px; }
+  .lede { color: var(--muted); font-size: 15px; }
+
+  .summary { margin: 28px 0 0; padding: 0; list-style: none; }
+  .summary li { display: flex; justify-content: space-between; gap: 16px; padding: 11px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+  .summary li span:first-child { color: var(--muted); }
+  .summary li span:last-child { font-weight: 500; text-align: right; }
+  .summary-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin: 32px 0 0; }
+
+  .privacy { margin-top: 28px; padding: 16px; border-radius: 8px; background: var(--ok-soft); font-size: 13.5px; color: #0e6245; }
+  .privacy strong { display: flex; align-items: center; gap: 6px; font-size: 14px; margin-bottom: 6px; color: #0b5038; }
+  .privacy ul { margin: 0; padding-left: 18px; }
+  .privacy li + li { margin-top: 4px; }
+
+  .side footer { margin-top: auto; padding-top: 32px; font-size: 13px; color: var(--faint); }
+  .side footer a { color: var(--muted); }
+
+  /* Form */
+  .section-title { font-size: 16px; font-weight: 600; margin: 0 0 12px; }
+  .section + .section { margin-top: 28px; }
+  .field { margin-bottom: 14px; }
+  .row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+  .row3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  label, .label { display: block; font-size: 13px; font-weight: 500; color: #3c4257; margin-bottom: 6px; }
+  .hint { display: block; font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+
   input, select {
-    width: 100%; padding: 9px 10px; font: inherit; color: var(--text);
-    background: var(--input-bg); border: 1px solid var(--border); border-radius: 7px;
+    width: 100%; height: 40px; padding: 8px 12px; font: inherit; font-size: 15px; color: var(--text);
+    background: #fff; border: 1px solid var(--input-border); border-radius: 6px; box-shadow: var(--shadow-input);
+    transition: box-shadow .15s, border-color .15s; appearance: none; -webkit-appearance: none;
   }
-  input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
+  input::placeholder { color: var(--faint); }
+  select {
+    padding-right: 34px; cursor: pointer;
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5l3 3 3-3' fill='none' stroke='%23697386' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 12px center;
+  }
+  input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--focus), var(--shadow-input); position: relative; z-index: 1; }
   input:user-invalid { border-color: var(--warn); }
-  .grid3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px 14px; }
-  input[readonly] { background: var(--locked-bg); color: var(--muted); cursor: not-allowed; }
-  input[readonly]:focus { outline: none; border-color: var(--border); }
-  .locked dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 0; font-size: .92rem; }
-  .locked dt { color: var(--muted); }
-  .locked dd { margin: 0; }
+  input[readonly] { background: var(--locked); color: var(--muted); cursor: default; }
+  input[readonly]:focus { border-color: var(--input-border); box-shadow: var(--shadow-input); }
+
+  /* Stripe-style grouped inputs: one box, inner dividers */
+  .group { border-radius: 6px; box-shadow: var(--shadow-input); }
+  .group > * { display: flex; }
+  .group input { border-radius: 0; box-shadow: none; margin: 0; }
+  .group > * + * input { margin-top: -1px; }
+  .group > * > input + input { margin-left: -1px; }
+  .group > :first-child > input:first-child { border-top-left-radius: 6px; }
+  .group > :first-child > input:last-child { border-top-right-radius: 6px; }
+  .group > :last-child > input:first-child { border-bottom-left-radius: 6px; }
+  .group > :last-child > input:last-child { border-bottom-right-radius: 6px; }
+  .w2 { flex: 2; } .w1 { flex: 1; }
+  .group input { min-width: 0; }
+
+  .check { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; color: #3c4257; margin: 22px 0 0; cursor: pointer; }
+  .check input { width: 16px; height: 16px; margin: 2px 0 0; padding: 0; appearance: auto; -webkit-appearance: checkbox; accent-color: var(--accent); box-shadow: none; flex: none; }
+
   button, .btn {
-    display: inline-block; font: inherit; font-weight: 600; padding: 10px 16px; border-radius: 8px;
-    border: 1px solid var(--accent); background: var(--accent); color: var(--accent-text);
-    cursor: pointer; text-decoration: none;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    height: 44px; padding: 0 18px; font: inherit; font-size: 15px; font-weight: 600; border-radius: 6px;
+    border: 0; background: var(--accent); color: #fff; cursor: pointer; text-decoration: none;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, .12), 0 2px 5px rgba(60, 66, 87, .12); transition: background .15s, transform .05s;
   }
-  button.secondary, .btn.secondary { background: transparent; color: var(--accent); }
-  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+  button:hover, .btn:hover { background: var(--accent-hover); text-decoration: none; }
+  button:active, .btn:active { transform: translateY(1px); }
+  button:focus-visible, .btn:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--focus); }
+  .btn-block { width: 100%; height: 48px; font-size: 16px; margin-top: 20px; }
+  .secondary { background: #fff; color: #3c4257; box-shadow: 0 0 0 1px var(--input-border), var(--shadow-input); }
+  .secondary:hover { background: var(--side); }
+  .link-btn { background: none; box-shadow: none; color: var(--muted); height: auto; padding: 0; font-weight: 500; font-size: 13px; }
+  .link-btn:hover { background: none; color: var(--text); text-decoration: underline; }
+  .center { text-align: center; margin-top: 14px; }
+
+  .err { color: var(--warn); font-size: 13.5px; margin-top: 10px; }
+
+  /* Result */
   #result[hidden] { display: none; }
+  #result { margin-top: 28px; padding: 24px; border-radius: 10px; background: #fff; box-shadow: var(--shadow-card); animation: pop .25s ease-out; }
+  @keyframes pop { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .result-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .tick { width: 28px; height: 28px; border-radius: 50%; background: var(--ok); color: #fff; display: grid; place-items: center; font-size: 15px; flex: none; }
+  .result-head h2 { font-size: 18px; margin: 0; font-weight: 600; }
+  #result p { color: var(--muted); font-size: 14px; }
   #bookmark {
-    display: block; padding: 14px; margin: 8px 0 12px; border: 2px dashed var(--accent); border-radius: 8px;
-    text-align: center; font-weight: 700; color: var(--accent); text-decoration: none;
+    display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px; margin: 16px 0;
+    border: 1.5px dashed var(--accent); border-radius: 8px; background: var(--accent-soft);
+    font-weight: 600; color: var(--accent); text-decoration: none; cursor: grab;
   }
-  #linkText { font-family: ui-monospace, Menlo, monospace; font-size: .8rem; }
-  .err { color: var(--warn); font-size: .9rem; margin-top: 8px; }
-  footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--border); text-align: center; }
-  footer a { color: var(--accent); }
-  details summary { cursor: pointer; font-weight: 600; }
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  #linkText { font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: var(--muted); word-break: break-all; margin: 8px 0 0; }
+
+  details summary { cursor: pointer; font-size: 13.5px; font-weight: 500; color: var(--muted); list-style: none; }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::before { content: "›"; display: inline-block; margin-right: 6px; transition: transform .15s; }
+  details[open] summary::before { transform: rotate(90deg); }
+  .import { margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--border); }
+  .import-row { display: flex; gap: 8px; margin-top: 10px; }
+  .import-row button { flex: none; }
+
+  /* Redirect screen */
+  #redirecting { min-height: 100vh; display: grid; place-content: center; text-align: center; color: var(--muted); }
+  .spinner { width: 32px; height: 32px; margin: 0 auto 16px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: minmax(0, 1fr); }
+    .side { border-right: 0; border-bottom: 1px solid var(--border); justify-content: center; }
+    .side-inner { max-width: 560px; padding: 28px 16px 24px; position: static; max-height: none; }
+    .main { justify-content: center; }
+    .main-inner { max-width: 560px; padding: 28px 16px 48px; }
+    h1 { font-size: 24px; margin-top: 20px; }
+    .side footer { display: none; }
+    .main-footer { display: block !important; }
+  }
+  @media (max-width: 420px) {
+    .row, .row3 { grid-template-columns: 1fr; }
+  }
+  .main-footer { display: none; margin-top: 32px; text-align: center; font-size: 13px; color: var(--faint); }
+  .main-footer a { color: var(--muted); }
 </style>
 </head>
 <body>
 
 <div id="redirecting">
+  <div class="spinner"></div>
   <p>Opening the Flat Rate form…</p>
-  <p class="muted">If nothing happens, <a id="redirectLink" href="#">click here</a>.</p>
+  <p style="font-size:13px">If nothing happens, <a id="redirectLink" href="#">click here</a>.</p>
 </div>
 
-<main>
-  <h1>Flat Rate Monthly Form – Bookmark Builder</h1>
-  <p class="muted">Fill this out once. You get a bookmark that opens the
-    <a href="https://docs.google.com/forms/d/e/1FAIpQLSd5hyHk4bj0-zCiNBw4WDLqI510sTWI3wnE45DuNUcgBPlwyw/viewform" target="_blank" rel="noopener">Monthly Parent Payment Form</a>
-    with everything already filled in, including last month and the school year. You only need to check it and press Submit.</p>
+<div class="layout">
+  <aside class="side">
+    <div class="side-inner">
+      <div class="brand"><span class="brand-mark">✓</span> Cheder Chabad · Flat Rate</div>
+      <h1>Your monthly form, filled in for you</h1>
+      <p class="lede">Fill this out once. You get a bookmark that opens the
+        <a href="https://docs.google.com/forms/d/e/1FAIpQLSd5hyHk4bj0-zCiNBw4WDLqI510sTWI3wnE45DuNUcgBPlwyw/viewform" target="_blank" rel="noopener">Monthly Parent Payment Form</a>
+        with everything filled in. Each month you just check it and press Submit.</p>
 
-  <section class="card privacy">
-    <h2>🔒 Your information stays on your computer</h2>
-    <ul>
-      <li>This page has no server, database, or analytics. Everything runs only in your browser.</li>
-      <li>Your details go only into the bookmark link and, if you choose, into this browser's local storage so you can edit them later.</li>
-      <li>Your details sit after the <code>#</code> in the bookmark. Browsers never send that part to the website. When you click the bookmark, your details go straight to the Google Form, the same as typing them in yourself.</li>
-      <li>Anyone with your bookmark link can see what's in it, so don't share it.</li>
-    </ul>
-  </section>
+      <p class="summary-title">Filled in automatically</p>
+      <ul class="summary">
+        <li><span>Role</span><span>Parent/Guardian</span></li>
+        <li><span>School</span><span>CHEDER CHABAD</span></li>
+        <li><span>City / State</span><span>Philadelphia, PA</span></li>
+        <li><span>Month</span><span id="sideMonth"></span></li>
+        <li><span>Agreements</span><span>Both checked</span></li>
+      </ul>
 
-  <form id="f" class="card" novalidate>
-    <h2>Month of Request</h2>
-    <div class="grid">
-      <div>
-        <label for="month">Month</label>
-        <select id="month" name="month">
-          <option value="">Last month (automatic)</option>
-          <option>September</option><option>October</option><option>November</option><option>December</option>
-          <option>January</option><option>February</option><option>March</option><option>April</option>
-          <option>May</option><option>June</option>
-        </select>
+      <div class="privacy">
+        <strong>🔒 Your information stays on your device</strong>
+        <ul>
+          <li>No server, database, or analytics. Everything runs in your browser.</li>
+          <li>Your details are kept only in your bookmark link, and in this browser if you choose.</li>
+          <li>Browsers never send the part of the link after <code>#</code> to this website. Your details go only to the Google Form.</li>
+          <li>Anyone with your bookmark link can see your details, so don't share it.</li>
+        </ul>
       </div>
-      <div>
-        <label for="sy">School Year</label>
-        <select id="sy" name="sy"><option value="">Automatic</option></select>
-      </div>
-      <p class="muted full" id="monthHint" style="margin:0"></p>
-    </div>
 
-    <h2 style="margin-top:22px">Student</h2>
-    <div class="grid">
-      <div class="full">
-        <label for="tid">Student Transportation ID <span class="hint">(7–8 letters/numbers, never starts with 0, uses the number 0 and never the letter O)</span></label>
-        <input id="tid" name="tid" required pattern="[1-9A-Z][0-9A-Z]{6,7}" autocomplete="off" autocapitalize="characters">
-      </div>
-      <div><label for="first">Student First Name</label><input id="first" name="first" required></div>
-      <div><label for="last">Student Last Name</label><input id="last" name="last" required></div>
-      <div><label for="dob">Student Date of Birth</label><input id="dob" name="dob" type="date" required></div>
-      <div>
-        <label for="grade">Student Grade</label>
-        <select id="grade" name="grade" required>
-          <option value="">Select…</option>
-          <option>K</option><option>1</option><option>2</option><option>3</option><option>4</option>
-          <option>5</option><option>6</option><option>7</option><option>8</option><option>9</option>
-          <option>10</option><option>11</option><option>12</option>
-        </select>
-      </div>
-      <div class="full">
-        <label for="addr">Student Street Address <span class="hint">(must match what the school has on file)</span></label>
-        <input id="addr" name="address-line1" required autocomplete="address-line1">
-      </div>
-      <div class="full grid3">
-        <div><label for="city">City</label><input id="city" name="city" value="Philadelphia" readonly tabindex="-1" autocomplete="address-level2"></div>
-        <div><label for="state">State</label><input id="state" name="state" value="PA" readonly tabindex="-1" autocomplete="address-level1"></div>
-        <div><label for="zip">Zip</label><input id="zip" name="postal-code" required inputmode="numeric" pattern="\d{5}" value="19151" autocomplete="postal-code"></div>
-      </div>
+      <footer>
+        Questions? Contact Dovid A Goldstein at
+        <a href="mailto:flatrate@rambam770.com">flatrate@rambam770.com</a>
+      </footer>
     </div>
+  </aside>
 
-    <h2 style="margin-top:22px">Parent / Payee</h2>
-    <div class="grid">
-      <div><label for="payee">Name of Person to be Reimbursed <span class="hint">(name on the check)</span></label><input id="payee" name="payee" required autocomplete="name"></div>
-      <div><label for="email">Your Email <span class="hint">(for the receipt)</span></label><input id="email" name="email" type="email" required autocomplete="email"></div>
+  <main class="main">
+    <div class="main-inner">
+      <form id="f" novalidate>
+        <div class="section">
+          <h2 class="section-title">Month of request</h2>
+          <div class="row">
+            <div>
+              <label for="month">Month</label>
+              <select id="month" name="month">
+                <option value="">Last month (auto)</option>
+                <option>September</option><option>October</option><option>November</option><option>December</option>
+                <option>January</option><option>February</option><option>March</option><option>April</option>
+                <option>May</option><option>June</option>
+              </select>
+            </div>
+            <div>
+              <label for="sy">School year</label>
+              <select id="sy" name="sy"><option value="">Auto</option></select>
+            </div>
+          </div>
+          <p class="hint" id="monthHint"></p>
+        </div>
+
+        <div class="section">
+          <h2 class="section-title">Student</h2>
+          <div class="field">
+            <label for="tid">Transportation ID</label>
+            <input id="tid" name="tid" required pattern="[1-9A-Z][0-9A-Z]{6,7}" autocomplete="off" autocapitalize="characters" placeholder="e.g. C0012345">
+            <span class="hint">7–8 letters/numbers. Never starts with 0, and uses the number 0, never the letter O.</span>
+          </div>
+          <div class="field">
+            <span class="label">Name</span>
+            <div class="group">
+              <div><input id="first" name="first" required placeholder="First name" aria-label="Student first name"><input id="last" name="last" required placeholder="Last name" aria-label="Student last name"></div>
+            </div>
+          </div>
+          <div class="row field">
+            <div><label for="dob">Date of birth</label><input id="dob" name="dob" type="date" required></div>
+            <div>
+              <label for="grade">Grade</label>
+              <select id="grade" name="grade" required>
+                <option value="">Select…</option>
+                <option>K</option><option>1</option><option>2</option><option>3</option><option>4</option>
+                <option>5</option><option>6</option><option>7</option><option>8</option><option>9</option>
+                <option>10</option><option>11</option><option>12</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <span class="label">Address</span>
+            <div class="group">
+              <div><input id="addr" name="address-line1" required autocomplete="address-line1" placeholder="Street address" aria-label="Student street address"></div>
+              <div>
+                <input class="w2" id="city" name="city" value="Philadelphia" readonly tabindex="-1" autocomplete="address-level2" aria-label="City" title="Same for all families">
+                <input class="w1" id="state" name="state" value="PA" readonly tabindex="-1" autocomplete="address-level1" aria-label="State" title="Same for all families">
+                <input class="w1" id="zip" name="postal-code" required inputmode="numeric" pattern="\d{5}" value="19151" autocomplete="postal-code" placeholder="Zip" aria-label="Zip">
+              </div>
+            </div>
+            <span class="hint">Must match the address the school has on file.</span>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2 class="section-title">Parent / Payee</h2>
+          <div class="field">
+            <label for="payee">Name on the check</label>
+            <input id="payee" name="payee" required autocomplete="name" placeholder="Full name of person to be reimbursed">
+          </div>
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" required autocomplete="email" placeholder="you@example.com">
+            <span class="hint">Google will send your form receipt here.</span>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2 class="section-title">Vehicle</h2>
+          <div class="row field">
+            <div><label for="make">Make</label><input id="make" name="make" required placeholder="Honda"></div>
+            <div><label for="model">Model</label><input id="model" name="model" required placeholder="Odyssey"></div>
+          </div>
+          <div class="row3 field">
+            <div><label for="vyear">Year</label><input id="vyear" name="vyear" required inputmode="numeric" pattern="(19|20)\d{2}" placeholder="2019"></div>
+            <div><label for="plate">Plate</label><input id="plate" name="plate" required autocapitalize="characters" placeholder="ABC1234"></div>
+            <div><label for="seats">Seats</label><input id="seats" name="seats" required inputmode="numeric" pattern="\d{1,2}" placeholder="7"></div>
+          </div>
+          <div class="field">
+            <label for="vin">VIN</label>
+            <input id="vin" name="vin" required pattern="[A-HJ-NPR-Z0-9]{17}" autocomplete="off" autocapitalize="characters" placeholder="17 characters">
+            <span class="hint">The letters I, O, and Q never appear in a VIN.</span>
+          </div>
+        </div>
+
+        <label class="check">
+          <input type="checkbox" id="remember" checked>
+          <span>Remember my details in this browser so I can edit them later</span>
+        </label>
+
+        <button type="submit" class="btn-block">Generate my bookmark</button>
+        <div id="formErr" class="err" hidden></div>
+        <div class="center"><button type="button" class="link-btn" id="clear">Clear saved details</button></div>
+        <p class="hint" style="text-align:center">Moved recently? Fill in "Change of Address" on the Google Form yourself that month.</p>
+      </form>
+
+      <section id="result" hidden>
+        <div class="result-head"><span class="tick">✓</span><h2>Your bookmark is ready</h2></div>
+        <p>Drag the button below to your bookmarks bar, or open it and bookmark the page. On a phone, open it and tap <em>Share → Add to Home Screen</em>.</p>
+        <a id="bookmark" href="#">📝 Flat Rate Form – <span id="bmName"></span></a>
+        <div class="actions">
+          <button type="button" id="copy">Copy link</button>
+          <a class="btn secondary" id="test" target="_blank" rel="noopener noreferrer">Test it now</a>
+        </div>
+        <details style="margin-top:16px">
+          <summary>Show the link</summary>
+          <p id="linkText"></p>
+        </details>
+      </section>
+
+      <details class="import">
+        <summary>Edit an existing bookmark</summary>
+        <p class="hint">Paste your bookmark link to load its details into the form.</p>
+        <div class="import-row">
+          <input id="importUrl" placeholder="Paste bookmark link…">
+          <button type="button" id="importBtn" class="secondary">Load</button>
+        </div>
+        <div id="importErr" class="err" hidden></div>
+      </details>
+
+      <footer class="main-footer">
+        Questions? Contact Dovid A Goldstein at
+        <a href="mailto:flatrate@rambam770.com">flatrate@rambam770.com</a>
+      </footer>
     </div>
-
-    <h2 style="margin-top:22px">Vehicle</h2>
-    <div class="grid">
-      <div><label for="make">Make</label><input id="make" name="make" required></div>
-      <div><label for="model">Model</label><input id="model" name="model" required></div>
-      <div><label for="vyear">Model Year</label><input id="vyear" name="vyear" required inputmode="numeric" pattern="(19|20)\d{2}"></div>
-      <div><label for="plate">License Plate</label><input id="plate" name="plate" required autocapitalize="characters"></div>
-      <div><label for="seats">Number of Seats</label><input id="seats" name="seats" required inputmode="numeric" pattern="\d{1,2}"></div>
-      <div>
-        <label for="vin">VIN <span class="hint">(17 characters, never I, O, or Q)</span></label>
-        <input id="vin" name="vin" required pattern="[A-HJ-NPR-Z0-9]{17}" autocomplete="off" autocapitalize="characters">
-      </div>
-    </div>
-
-    <div class="card locked" style="margin-top:22px">
-      <h2>Filled in automatically</h2>
-      <dl>
-        <dt>Role</dt><dd>Parent/Guardian</dd>
-        <dt>School</dt><dd>CHEDER CHABAD</dd>
-        <dt>Agreements</dt><dd>Both boxes checked</dd>
-      </dl>
-      <p class="muted" style="margin:10px 0 0">If you moved, fill in the "Change of Address" section on the Google Form yourself that month.</p>
-    </div>
-
-    <label style="display:flex;gap:8px;align-items:center;font-weight:400;margin-top:16px">
-      <input type="checkbox" id="remember" style="width:auto" checked>
-      Remember my details in this browser so I can edit them later
-    </label>
-
-    <div class="actions">
-      <button type="submit">Generate my bookmark</button>
-      <button type="button" class="secondary" id="clear">Clear saved details</button>
-    </div>
-    <div id="formErr" class="err" hidden></div>
-  </form>
-
-  <section id="result" class="card" hidden>
-    <h2>Your bookmark is ready</h2>
-    <p>Drag this button to your bookmarks bar, or click it and then bookmark the page it opens. On a phone, open it and use <em>Add to Home Screen</em> or <em>Bookmark</em>.</p>
-    <a id="bookmark" href="#">📝 Flat Rate Form – <span id="bmName"></span></a>
-    <div class="actions" style="margin-top:0">
-      <button type="button" id="copy">Copy link</button>
-      <a class="btn secondary" id="test" target="_blank" rel="noopener noreferrer">Test it now</a>
-    </div>
-    <details style="margin-top:14px">
-      <summary>Show the link</summary>
-      <p id="linkText" style="word-break:break-all;margin-top:8px"></p>
-    </details>
-  </section>
-
-  <details class="card">
-    <summary>Edit an existing bookmark</summary>
-    <p class="muted" style="margin-top:8px">Paste your bookmark link here to load its details into the form above.</p>
-    <div style="display:flex;gap:8px">
-      <input id="importUrl" placeholder="Paste bookmark link…">
-      <button type="button" id="importBtn">Load</button>
-    </div>
-    <div id="importErr" class="err" hidden></div>
-  </details>
-  <footer class="muted">
-    Questions or problems with this page? Contact Dovid A Goldstein at
-    <a href="mailto:flatrate@rambam770.com">flatrate@rambam770.com</a>
-  </footer>
-</main>
+  </main>
+</div>
 
 <script>
 (function () {
@@ -326,11 +451,12 @@
   function updateMonthHint() {
     // Spell out what "automatic" resolves to today, e.g. "Last month (September)" / "Automatic (2026-27)".
     var auto = FR.requestMonth(new Date(), "", "");
-    $("month").options[0].textContent = "Last month (" + (auto.month || "blank in Jul/Aug") + ")";
+    $("month").options[0].textContent = (auto.month || "Blank") + " (auto)";
     var autoYear = FR.requestMonth(new Date(), $("month").value, "").year.replace(" (Current School Year)", "");
-    $("sy").options[0].textContent = "Automatic (" + autoYear + ")";
+    $("sy").options[0].textContent = autoYear + " (auto)";
     var req = FR.requestMonth(new Date(), $("month").value, $("sy").value);
     var today = (req.month || "left blank (July/August aren't part of Flat Rate)") + ", " + req.year;
+    $("sideMonth").textContent = $("month").value ? $("month").value + " " + req.year.replace(" (Current School Year)", "") : "Last month, each time";
     $("monthHint").textContent = $("month").value || $("sy").value
       ? "This bookmark will always open with: " + today + ". Use this for catching up on a past month. For your regular monthly bookmark, keep it on automatic."
       : "The bookmark picks last month each time you open it. Today that's: " + today + ".";
@@ -377,7 +503,7 @@
     var err = $("formErr");
     if (!form.checkValidity()) {
       var bad = form.querySelector(":invalid");
-      var name = bad && bad.labels && bad.labels[0] ? bad.labels[0].firstChild.textContent.trim() : "a field";
+      var name = bad ? (bad.getAttribute("aria-label") || (bad.labels && bad.labels[0] ? bad.labels[0].textContent.trim() : "a field")) : "a field";
       err.textContent = "Please check: " + name;
       err.hidden = false;
       form.reportValidity();
