@@ -6,6 +6,17 @@
 <meta name="referrer" content="no-referrer">
 <meta name="robots" content="noindex">
 <title>Flat Rate Bookmark</title>
+<meta name="description" content="Enter your details once and get a bookmark that opens the monthly Flat Rate form already filled in. Nothing is stored on any server.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Cheder Chabad · Flat Rate">
+<meta property="og:title" content="Your monthly Flat Rate form, filled in for you">
+<meta property="og:description" content="Enter your details once and get a bookmark that opens the monthly Flat Rate form already filled in. Nothing is stored on any server.">
+<meta property="og:url" content="https://flatrate.rambam770.com/">
+<meta property="og:image" content="https://flatrate.rambam770.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Your monthly form, filled in for you">
+<meta name="twitter:card" content="summary_large_image">
 <script>
 // Runs before anything renders: if this is a bookmark (#d=...), forward straight to the Google Form.
 (function () {
@@ -195,6 +206,11 @@
   .link-btn:hover { background: none; color: var(--text); text-decoration: underline; }
   .center { text-align: center; margin-top: 14px; }
 
+  .share { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--border); }
+  .share p { margin-bottom: 10px; }
+  .btn.wa { width: 100%; background: #25d366; color: #fff; }
+  .btn.wa:hover { background: #1ebe5b; }
+  footer a[data-share] { display: inline-block; margin-bottom: 6px; font-weight: 500; color: #128c4b; }
   .err { color: var(--warn); font-size: 13.5px; margin-top: 10px; }
 
   /* Result */
@@ -280,6 +296,7 @@
       </div>
 
       <footer>
+        <a data-share target="_blank" rel="noopener">Share this page on WhatsApp</a><br>
         Questions? Contact Dovid A Goldstein at
         <a href="mailto:flatrate@rambam770.com">flatrate@rambam770.com</a>
       </footer>
@@ -398,6 +415,10 @@
           <button type="button" id="copy">Copy link</button>
           <a class="btn secondary" id="test" target="_blank" rel="noopener noreferrer">Test it now</a>
         </div>
+        <div class="share">
+          <p>Know other Cheder Chabad parents? Send them this page so they can make their own. Your personal link won't be included.</p>
+          <a class="btn wa" data-share target="_blank" rel="noopener">Share with parents on WhatsApp</a>
+        </div>
         <details style="margin-top:16px">
           <summary>Show the link</summary>
           <p id="linkText"></p>
@@ -415,6 +436,7 @@
       </details>
 
       <footer class="main-footer">
+        <a data-share target="_blank" rel="noopener">Share this page on WhatsApp</a><br>
         Questions? Contact Dovid A Goldstein at
         <a href="mailto:flatrate@rambam770.com">flatrate@rambam770.com</a>
       </footer>
@@ -436,6 +458,11 @@
   var UPPER = ["tid", "plate", "vin"];
   var form = document.getElementById("f");
   var $ = function (id) { return document.getElementById(id); };
+
+  // Share the page itself (never a personal #d= link) with a ready-made WhatsApp message.
+  var SHARE_TEXT = "Fill out the Flat Rate transportation form every month? Enter your details once on this page and get a bookmark that opens the form already filled in, including the month. Just check it and press Submit. Nothing is saved on any server.";
+  var shareHref = "https://wa.me/?text=" + encodeURIComponent(SHARE_TEXT + "\n\n" + location.href.split("#")[0]);
+  document.querySelectorAll("[data-share]").forEach(function (a) { a.href = shareHref; });
 
   // School year choices mirror the Google Form: this year and the two before it.
   var now = new Date();
