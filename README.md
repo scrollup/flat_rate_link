@@ -3,7 +3,7 @@
 A single static page (`index.html`) that builds a bookmark for the monthly Flat Rate parent payment Google Form.
 
 - Parents fill it out once. The bookmark has their details after the `#`, which browsers never send to the host.
-- Opening the bookmark forwards straight to the Google Form. Every field is filled in, the month is set to last month (left blank for July and August), and the school year is set to match.
+- Opening the bookmark forwards straight to the Google Form. Every field is filled in, the month is set to last month (left blank for July and August), and the school year is set to match. Parents can also pick a fixed month and school year to catch up on a past month.
 - There's no server, database, or analytics. Details can be saved in the browser's localStorage if the parent wants.
 
 ## Deploy

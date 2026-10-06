@@ -26,12 +26,14 @@
     return start + "-" + String(start + 1).slice(-2);
   }
 
-  // The month being reported is the previous calendar month (payments are for a concluded month).
-  // July/August aren't part of Flat Rate, so the month is left blank then.
-  function requestMonth(now) {
+  // By default the month being reported is the previous calendar month (payments are for a concluded month).
+  // A fixed month resolves to its most recent occurrence up to last month. July/August aren't part of
+  // Flat Rate, so the month is left blank then. A fixed school year ("2025-26") overrides the computed one.
+  function requestMonth(now, fixedMonth, fixedYear) {
     var d = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    for (var i = 0; fixedMonth && i < 12 && MONTHS[d.getMonth()] !== fixedMonth; i++) d.setMonth(d.getMonth() - 1);
     var m = d.getMonth();
-    var sy = schoolYear(d.getFullYear(), m);
+    var sy = fixedYear || schoolYear(d.getFullYear(), m);
     var current = schoolYear(now.getFullYear(), now.getMonth());
     return {
       month: (m === 6 || m === 7) ? "" : MONTHS[m],
@@ -40,7 +42,7 @@
   }
 
   function buildFormUrl(d, now) {
-    var req = requestMonth(now || new Date());
+    var req = requestMonth(now || new Date(), d.month, d.sy);
     var dob = (d.dob || "").split("-");
     var p = [
       ["entry.75477160", d.tid],
@@ -77,7 +79,7 @@
     }).join("&");
   }
 
-  window.FlatRate = { decode: decode, buildFormUrl: buildFormUrl, requestMonth: requestMonth };
+  window.FlatRate = { decode: decode, buildFormUrl: buildFormUrl, requestMonth: requestMonth, schoolYear: schoolYear };
 
   var m = location.hash.match(/^#d=([A-Za-z0-9_-]+)$/);
   if (m) {
@@ -129,6 +131,9 @@
   }
   input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
   input:user-invalid { border-color: var(--warn); }
+  .grid3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px 14px; }
+  input[readonly] { background: var(--locked-bg); color: var(--muted); cursor: not-allowed; }
+  input[readonly]:focus { outline: none; border-color: var(--border); }
   .locked dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 0; font-size: .92rem; }
   .locked dt { color: var(--muted); }
   .locked dd { margin: 0; }
@@ -173,7 +178,25 @@
   </section>
 
   <form id="f" class="card" novalidate>
-    <h2>Student</h2>
+    <h2>Month of Request</h2>
+    <div class="grid">
+      <div>
+        <label for="month">Month</label>
+        <select id="month" name="month">
+          <option value="">Last month (automatic)</option>
+          <option>September</option><option>October</option><option>November</option><option>December</option>
+          <option>January</option><option>February</option><option>March</option><option>April</option>
+          <option>May</option><option>June</option>
+        </select>
+      </div>
+      <div>
+        <label for="sy">School Year</label>
+        <select id="sy" name="sy"><option value="">Automatic</option></select>
+      </div>
+      <p class="muted full" id="monthHint" style="margin:0"></p>
+    </div>
+
+    <h2 style="margin-top:22px">Student</h2>
     <div class="grid">
       <div class="full">
         <label for="tid">Student Transportation ID <span class="hint">(7–8 letters/numbers, never starts with 0, uses the number 0 and never the letter O)</span></label>
@@ -193,9 +216,13 @@
       </div>
       <div class="full">
         <label for="addr">Student Street Address <span class="hint">(must match what the school has on file)</span></label>
-        <input id="addr" name="addr" required autocomplete="street-address">
+        <input id="addr" name="address-line1" required autocomplete="address-line1">
       </div>
-      <div><label for="zip">Zip</label><input id="zip" name="zip" required inputmode="numeric" pattern="\d{5}" value="19151"></div>
+      <div class="full grid3">
+        <div><label for="city">City</label><input id="city" name="city" value="Philadelphia" readonly tabindex="-1" autocomplete="address-level2"></div>
+        <div><label for="state">State</label><input id="state" name="state" value="PA" readonly tabindex="-1" autocomplete="address-level1"></div>
+        <div><label for="zip">Zip</label><input id="zip" name="postal-code" required inputmode="numeric" pattern="\d{5}" value="19151" autocomplete="postal-code"></div>
+      </div>
     </div>
 
     <h2 style="margin-top:22px">Parent / Payee</h2>
@@ -222,12 +249,9 @@
       <dl>
         <dt>Role</dt><dd>Parent/Guardian</dd>
         <dt>School</dt><dd>CHEDER CHABAD</dd>
-        <dt>City / State</dt><dd>Philadelphia, PA</dd>
-        <dt>Month of Request</dt><dd id="previewMonth"></dd>
-        <dt>School Year</dt><dd id="previewYear"></dd>
         <dt>Agreements</dt><dd>Both boxes checked</dd>
       </dl>
-      <p class="muted" style="margin:10px 0 0">The month is always last month, worked out when you click the bookmark. In August and September it's left blank because July and August aren't part of Flat Rate. If you moved, fill in the "Change of Address" section on the Google Form yourself that month.</p>
+      <p class="muted" style="margin:10px 0 0">If you moved, fill in the "Change of Address" section on the Google Form yourself that month.</p>
     </div>
 
     <label style="display:flex;gap:8px;align-items:center;font-weight:400;margin-top:16px">
@@ -276,14 +300,38 @@
   }
 
   var STORE_KEY = "flatRateBookmark.v1";
-  var FIELDS = ["tid", "first", "last", "dob", "grade", "addr", "zip", "payee", "email", "make", "model", "vyear", "plate", "seats", "vin"];
+  var LINK_ONLY = ["month", "sy"]; // go in the link but aren't remembered, so a one-off month doesn't stick
+  var FIELDS = ["month", "sy", "tid", "first", "last", "dob", "grade", "addr", "zip", "payee", "email", "make", "model", "vyear", "plate", "seats", "vin"];
   var UPPER = ["tid", "plate", "vin"];
   var form = document.getElementById("f");
   var $ = function (id) { return document.getElementById(id); };
 
-  var req = FR.requestMonth(new Date());
-  $("previewMonth").textContent = (req.month || "(left blank, choose it on the form)") + " (if opened today)";
-  $("previewYear").textContent = req.year;
+  // School year choices mirror the Google Form: this year and the two before it.
+  var now = new Date();
+  var thisYear = FR.schoolYear(now.getFullYear(), now.getMonth());
+  var start = +thisYear.slice(0, 4);
+  for (var y = start; y > start - 3; y--) {
+    var opt = document.createElement("option");
+    opt.value = FR.schoolYear(y, 8);
+    opt.textContent = opt.value + (y === start ? " (Current School Year)" : "");
+    $("sy").appendChild(opt);
+  }
+
+  function updateMonthHint() {
+    // Spell out what "automatic" resolves to today, e.g. "Last month (September)" / "Automatic (2026-27)".
+    var auto = FR.requestMonth(new Date(), "", "");
+    $("month").options[0].textContent = "Last month (" + (auto.month || "blank in Jul/Aug") + ")";
+    var autoYear = FR.requestMonth(new Date(), $("month").value, "").year.replace(" (Current School Year)", "");
+    $("sy").options[0].textContent = "Automatic (" + autoYear + ")";
+    var req = FR.requestMonth(new Date(), $("month").value, $("sy").value);
+    var today = (req.month || "left blank (July/August aren't part of Flat Rate)") + ", " + req.year;
+    $("monthHint").textContent = $("month").value || $("sy").value
+      ? "This bookmark will always open with: " + today + ". Use this for catching up on a past month. For your regular monthly bookmark, keep it on automatic."
+      : "The bookmark picks last month each time you open it. Today that's: " + today + ".";
+  }
+  $("month").addEventListener("change", updateMonthHint);
+  $("sy").addEventListener("change", updateMonthHint);
+  updateMonthHint();
 
   function encode(obj) {
     var bytes = new TextEncoder().encode(JSON.stringify(obj)), bin = "";
@@ -299,6 +347,7 @@
 
   function fill(d) {
     FIELDS.forEach(function (k) { if (d[k] != null) $(k).value = d[k]; });
+    updateMonthHint();
   }
 
   function storage(fn) { try { return fn(window.localStorage); } catch (e) { return null; } }
@@ -331,12 +380,15 @@
     err.hidden = true;
 
     var d = readForm();
-    if ($("remember").checked) storage(function (s) { s.setItem(STORE_KEY, JSON.stringify(d)); });
+    var keep = {};
+    FIELDS.forEach(function (k) { if (LINK_ONLY.indexOf(k) < 0) keep[k] = d[k]; });
+    if ($("remember").checked) storage(function (s) { s.setItem(STORE_KEY, JSON.stringify(keep)); });
     else storage(function (s) { s.removeItem(STORE_KEY); });
 
-    var link = location.origin + location.pathname + "#d=" + encode(d);
+    LINK_ONLY.forEach(function (k) { if (!d[k]) delete d[k]; });
+    var link = location.href.split("#")[0] + "#d=" + encode(d);
     $("bookmark").href = link;
-    $("bmName").textContent = d.first + " " + d.last;
+    $("bmName").textContent = d.first + " " + d.last + (d.month || d.sy ? " (" + [d.month, d.sy].filter(Boolean).join(" ") + ")" : "");
     $("test").href = link;
     $("linkText").textContent = link;
     $("result").hidden = false;
@@ -360,6 +412,7 @@
   $("clear").addEventListener("click", function () {
     storage(function (s) { s.removeItem(STORE_KEY); });
     form.reset();
+    updateMonthHint();
     $("result").hidden = true;
   });
 
